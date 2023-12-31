@@ -3,8 +3,9 @@ import json
 from supabase import create_client, Client
 import traceback
 from datetime import datetime
-from config import SUPABASE_API_KEY, SUPABASE_URL
 
+SUPABASE_URL = 'https://zkfovcmkaobvsceazqat.supabase.co'
+SUPABASE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprZm92Y21rYW9idnNjZWF6cWF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDI2NjIwNDIsImV4cCI6MjAxODIzODA0Mn0.p7nCDkbdLK9WnfrmELj8zDk4dfTsP1DveSMHeGnrPpA'
 
 app = Flask(__name__)
 supabase =  create_client(SUPABASE_URL, SUPABASE_API_KEY)
