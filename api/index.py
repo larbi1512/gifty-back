@@ -25,6 +25,42 @@ def get_users():
     print(response)
     return  jsonify(users = user_list)
 
+@app.route('/api/user_login', methods=['POST'])
+def api_users_login():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    error = False
+
+    if (not email) or (len(email) < 5):
+        error = 'Email needs to be valid'
+
+    if (not error) and ((not password) or (len(password) < 5)):
+        error = 'Provide a password'
+
+    if not error:
+        # Fetch user by email
+        response = supabase.table('users').select("*").ilike('email', email).execute()
+
+        if len(response.data) > 0:
+            user = response.data[0]
+
+            # Compare hashed password
+            if user['password'] == password: 
+                return json.dumps({'status': 200, 'message': '', 'data': user})
+            else:
+                error = 'Invalid Email or password'
+
+    if error:
+        return json.dumps({'status': 500, 'message': error})
+
+    return json.dumps({'status': 500, 'message': 'Invalid Email or password'})
+
+@app.route('/api/user_signup', methods=['GET', 'POST'])
+def api_user_signup():
+    email= request.form.get('email')
+    password= request.form.get('password')
+    error =False
+
 @app.route('/')
 def home():
     return 'Hello, World!'
