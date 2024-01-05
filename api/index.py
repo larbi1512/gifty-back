@@ -27,7 +27,6 @@ def get_users():
     print(response)
     return  jsonify(users = user_list)
 
-@app.route('/api/user_login', methods=['POST'])
 
 @app.route('/api/user_login', methods=['POST'])
 def api_users_login():
