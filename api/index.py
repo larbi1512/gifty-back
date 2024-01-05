@@ -27,7 +27,6 @@ def get_users():
     print(response)
     return  jsonify(users = user_list)
 
-@app.route('/api/user_login', methods=['POST'])
 
 @app.route('/api/user_login', methods=['POST'])
 def api_users_login():
@@ -93,7 +92,7 @@ def is_email_exists():
         return json.dumps({'status': 200, 'message': 'Email exists'}), 200
     else:
         return json.dumps({'status': 404, 'message': 'Email does not exist'}), 404
-=======
+    
 @app.route('/gifts.create',methods=['GET','POST'])
 def api_gifts_create():    
     print('Variables...'+str(request.args))
