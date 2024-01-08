@@ -3,7 +3,6 @@ import json
 from supabase import create_client, Client
 import traceback
 from datetime import datetime
-from werkzeug.security import check_password_hash
 
 
 SUPABASE_URL = 'https://zkfovcmkaobvsceazqat.supabase.co'
@@ -72,12 +71,63 @@ def api_users_login():
     return jsonify({'status': 200, 'message': 'Login successful', 'data': user}), 200
 
 
-@app.route('/api/user_signup', methods=['GET', 'POST'])
-def api_user_signup():
-    email= request.form.get('email')
-    password= request.form.get('password')
-    error =False
+@app.route('/api/signup_user', methods=['POST'])
+def api_signup_user():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirm_password')
 
+    # Add validation checks for email, password, and confirm_password
+    if not email or len(email) < 5:
+        return jsonify({'status': 400, 'message': 'Email needs to be valid'}), 400
+
+    if not password or len(password) < 5:
+        return jsonify({'status': 400, 'message': 'Provide a valid password'}), 400
+
+    if password != confirm_password:
+        return jsonify({'status': 400, 'message': 'Passwords do not match'}), 400
+
+    # Check if the user already exists
+    user_exists_response = supabase.table('user').select("*").ilike('email', email).execute()
+
+    if len(user_exists_response.data) > 0:
+        return jsonify({'status': 400, 'message': 'User with this email already exists'}), 400
+
+    # Insert the new user into the 'user' table
+    response = supabase.table('user').insert([
+        {'email': email, 'password': password},
+    ]).execute()
+
+    return jsonify({'status': 200, 'message': 'User signup successful'}), 200
+
+@app.route('/api/signup_provider', methods=['POST'])
+def api_signup_provider():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirm_password')
+
+    # Add validation checks for email, password, and confirm_password if needed
+    if not email or len(email) < 5:
+        return jsonify({'status': 400, 'message': 'Email needs to be valid'}), 400
+
+    if not password or len(password) < 5:
+        return jsonify({'status': 400, 'message': 'Provide a valid password'}), 400
+
+    if password != confirm_password:
+        return jsonify({'status': 400, 'message': 'Passwords do not match'}), 400
+
+    # Check if the provider already exists
+    provider_exists_response = supabase.table('provider').select("*").ilike('email', email).execute()
+
+    if len(provider_exists_response.data) > 0:
+        return jsonify({'status': 400, 'message': 'Provider with this email already exists'}), 400
+
+    # Insert the new provider into the 'provider' table
+    response = supabase.table('provider').insert([
+        {'email': email, 'password': password},
+    ]).execute()
+
+    return jsonify({'status': 200, 'message': 'Provider signup successful'}), 200
 
 @app.route('/isEmailExists', methods=['GET'])
 def is_email_exists():
