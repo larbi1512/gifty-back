@@ -127,8 +127,25 @@ def api_signup_user1():
     phone_number = request.form.get('phone_number')
     
     #add validation forms
-    if not name or not surname or not username or not wilaya or not phone_number:
-        return jsonify({'status': 400, 'message': 'All fields must be filled'}), 400
+    if not name:
+        return jsonify({'status': 400, 'message': 'name must be filled'}), 400
+    elif not surname :
+        return jsonify({'status': 400, 'message': 'surname must be filled'}), 400
+    elif not username:
+        return jsonify({'status': 400, 'message': 'username must be filled'}), 400
+    elif not wilaya:
+        return jsonify({'status': 400, 'message': 'wilaya must be filled'}), 400
+    elif not phone_number:
+        return jsonify({'status': 400, 'message': 'phone_number must be filled'}), 400
+    elif len(phone_number) != 10:
+        return jsonify({'status': 400, 'message': 'phone_number must be 10 digits'}), 400
+    elif not phone_number.isdigit():
+        return jsonify({'status': 400, 'message': 'phone_number must be digits'}), 400
+    elif not phone_number.startswith('0'):
+        return jsonify({'status': 400, 'message': 'phone_number must start with 0'}), 400
+    elif not phone_number.startswith('05') and not phone_number.startswith('06') and not phone_number.startswith('07'):
+        return jsonify({'status': 400, 'message': 'phone_number must start with 05 or 06 or 07'}), 400
+    
     #add the data to the table user based on the user id
     response = supabase.table('user').insert([
         {'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
