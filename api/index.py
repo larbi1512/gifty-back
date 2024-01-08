@@ -118,6 +118,25 @@ def api_signup_provider():
 
     return jsonify({'status': 200, 'message': 'Provider signup successful'}), 200
 
+@app.route('/api/signup_user1', methods=['POST'])
+def api_signup_user1():
+    name = request.form.get('name')
+    surname = request.form.get('surname')
+    username = request.form.get('username')
+    wilaya = request.form.get('wilaya')
+    phone_number = request.form.get('phone_number')
+    
+    #add validation forms
+    if not name or not surname or not username or not wilaya or not phone_number:
+        return jsonify({'status': 400, 'message': 'All fields must be filled'}), 400
+    #add the data to the table user based on the user id
+    response = supabase.table('user').insert([
+        {'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
+    ]).execute()
+    
+    return jsonify({'status': 200, 'message': 'User signup part 1 successful'}), 200
+
+
 @app.route('/isEmailExists', methods=['GET'])
 def is_email_exists():
     email = request.args.get('email')
