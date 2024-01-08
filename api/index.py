@@ -58,7 +58,7 @@ def api_users_login():
     if 'password' not in user:
         # Try fetching password from 'provider' table
         response_password = supabase.table('provider').select("password").ilike('email', email).execute()
-        
+
         if len(response_password.data) == 0:
             return jsonify({'status': 500, 'message': 'Password column missing in user/provider table'}), 500
 
@@ -68,8 +68,7 @@ def api_users_login():
         if user['password'] != password:
             return jsonify({'status': 401, 'message': 'Invalid email or password'}), 401
     else:
-         return jsonify({'status': 200, 'message': 'Login successful', 'data': user}), 200
-
+        return jsonify({'status': 200, 'message': 'Login successful', 'data': user}), 200
 
 @app.route('/api/signup_user', methods=['POST'])
 def api_signup_user():
