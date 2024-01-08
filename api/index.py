@@ -64,11 +64,11 @@ def api_users_login():
 
         user['password'] = response_password.data[0]['password']
 
-    # Compare hashed password
-    if not check_password_hash(user['password'], password):
-        return jsonify({'status': 401, 'message': 'Invalid email or password'}), 401
-
-    return jsonify({'status': 200, 'message': 'Login successful', 'data': user}), 200
+    if 'password' in user:
+        if user['password'] != password:
+            return jsonify({'status': 401, 'message': 'Invalid email or password'}), 401
+    else:
+         return jsonify({'status': 200, 'message': 'Login successful', 'data': user}), 200
 
 
 @app.route('/api/signup_user', methods=['POST'])
