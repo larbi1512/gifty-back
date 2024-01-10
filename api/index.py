@@ -90,7 +90,7 @@ def api_signup_user():
     user_id = response['data'][0]['id']
 
 
-    return jsonify({'status': 200, 'message': 'User signup successful'}), 200
+    return jsonify({'status': 200, 'message': 'User signup successful', 'id':user_id}), 200
 
 @app.route('/api/signup_provider', methods=['POST'])
 def api_signup_provider():
@@ -122,7 +122,7 @@ def api_signup_provider():
     provider_id = response['data'][0]['id']
 
 
-    return jsonify({'status': 200, 'message': 'Provider signup successful'}), 200
+    return jsonify({'status': 200, 'message': 'Provider signup successful', 'id':provider_id}), 200
 
 @app.route('/api/signup_user1', methods=['POST'])
 def api_signup_user1():
@@ -158,7 +158,7 @@ def api_signup_user1():
         {'id': user_id, 'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
     ]).execute()
     
-    return jsonify({'status': 200, 'message': 'User signup part 1 successful'}), 200
+    return jsonify({'status': 200, 'message': 'User signup part 1 successful', 'id': user_id}), 200
 
 
 @app.route('/isEmailExists', methods=['GET'])
