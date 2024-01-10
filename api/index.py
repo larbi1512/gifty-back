@@ -88,10 +88,15 @@ def api_signup_user():
     ]).execute()
     
     user_id = response['data'][0]['id']
+    print("User data inserted:", response)
 
-
-    return jsonify({'status': 200, 'message': 'User signup successful', 'id':user_id}), 200
-
+    if user_id:
+        # Successfully inserted user, proceed to signup_user1
+        return jsonify({'status': 200, 'message': 'User signup successful', 'user_id': user_id}), 200
+    else:
+        # Failed to insert user
+        return jsonify({'status': 500, 'message': 'Internal Server Error'}), 500
+    
 @app.route('/api/signup_provider', methods=['POST'])
 def api_signup_provider():
     email = request.form.get('email')
