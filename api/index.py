@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, url_for
 import json
 from supabase import create_client, Client
 import traceback
@@ -307,42 +307,62 @@ def add_colors():
         return jsonify({'error': str(e)})
 
 
-@app.route('/upload', methods=['POST'])
-def upload_image():
-    # Get image bytes from request
-    image_bytes = request.form['image']
+# @app.route('/upload', methods=['POST'])
+# def upload_image():
+#     # Get image bytes from request
+#     image_bytes = request.form['image']
 
-    # Upload to Supabase Storage
-    storage = supabase.storage()
-    storage_url = f'{SUPABASE_URL}/storage/gifts_images/' + image_bytes.filename
-    response = storage.from_file(storage_url, image_bytes)
+#     # Upload to Supabase Storage
+#     storage = supabase.storage()
+#     storage_url = f'{SUPABASE_URL}/storage/gifts_images/' + image_bytes.filename
+#     response = storage.from_file(storage_url, image_bytes)
 
-    # # return 'File uploaded successfully'
+#     # # return 'File uploaded successfully'
 
-    # storage_url = f'{SUPABASE_URL}/storage/v1/object/public'
-    # headers = {'Content-Type': 'application/octet-stream', 'Authorization': f'Bearer {SUPABASE_API_KEY}'}
-    # response = requests.post(storage_url, data=image_bytes, headers=headers)
+#     # storage_url = f'{SUPABASE_URL}/storage/v1/object/public'
+#     # headers = {'Content-Type': 'application/octet-stream', 'Authorization': f'Bearer {SUPABASE_API_KEY}'}
+#     # response = requests.post(storage_url, data=image_bytes, headers=headers)
 
 
-    if response.status_code == 200:
-        file_name = response.json().get('data').get('name')
-        print("\nfile name: ", file_name, "\n")
-        image_url = f'{SUPABASE_URL}/storage/gifts_images/{file_name}'
-        return jsonify(success=True, image_url = image_url)
-        #insert_url = f'{SUPABASE_URL}/rest/v1/{SUPABASE_PROJECT_ID}/table/{TABLE_X_NAME}'
-        # headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {SUPABASE_API_KEY}'}
-        # data = {'image_path': image_url}  # You can include other fields as needed
-        # #insert_response = requests.post(insert_url, json=data, headers=headers)
-        # insert_response = supabase.table('images').upsert([data]).execute()
+#     if response.status_code == 200:
+#         file_name = response.json().get('data').get('name')
+#         print("\nfile name: ", file_name, "\n")
+#         image_url = f'{SUPABASE_URL}/storage/gifts_images/{file_name}'
+#         return jsonify(success=True, image_url = image_url)
+#         #insert_url = f'{SUPABASE_URL}/rest/v1/{SUPABASE_PROJECT_ID}/table/{TABLE_X_NAME}'
+#         # headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {SUPABASE_API_KEY}'}
+#         # data = {'image_path': image_url}  # You can include other fields as needed
+#         # #insert_response = requests.post(insert_url, json=data, headers=headers)
+#         # insert_response = supabase.table('images').upsert([data]).execute()
         
 
-        # if insert_response.status_code == 201:
-        #     return jsonify({'status': 'success', 'message': 'Image uploaded and path saved successfully'})
-        # else:
-        #     return jsonify({'status': 'error', 'message': 'Error saving image path in Table X'})
+#         # if insert_response.status_code == 201:
+#         #     return jsonify({'status': 'success', 'message': 'Image uploaded and path saved successfully'})
+#         # else:
+#         #     return jsonify({'status': 'error', 'message': 'Error saving image path in Table X'})
 
-    else:
-        return 'Error uploading image'
+#     else:
+#         return 'Error uploading image'
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    try:
+        # Get the image file from the request
+        image_file = request.files['image']
+
+        # Save the file to a desired location
+        image_filename = secure_filename(image_file.filename)
+        image_path = 'path/to/save/' + image_filename
+        image_file.save(image_path)
+
+        # Process the image or perform any other necessary tasks
+
+        # Get the URL for the uploaded image
+        image_url = url_for('uploaded_file', filename=image_filename, _external=True)
+
+        return jsonify({'message': 'Upload successful', 'imageUrl': image_url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/images.add', methods=['POST'])
 def add_images():
