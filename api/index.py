@@ -86,6 +86,9 @@ def api_signup_user():
     response = supabase.table('user').insert([
         {'email': email, 'password': password},
     ]).execute()
+    
+    user_id = response['data'][0]['id']
+
 
     return jsonify({'status': 200, 'message': 'User signup successful'}), 200
 
@@ -115,11 +118,15 @@ def api_signup_provider():
     response = supabase.table('provider').insert([
         {'email': email, 'password': password},
     ]).execute()
+    
+    provider_id = response['data'][0]['id']
+
 
     return jsonify({'status': 200, 'message': 'Provider signup successful'}), 200
 
 @app.route('/api/signup_user1', methods=['POST'])
 def api_signup_user1():
+    user_id = request.form.get('id')
     name = request.form.get('name')
     surname = request.form.get('surname')
     username = request.form.get('username')
@@ -148,7 +155,7 @@ def api_signup_user1():
     
     #add the data to the table user based on the user id
     response = supabase.table('user').insert([
-        {'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
+        {'id': user_id, 'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
     ]).execute()
     
     return jsonify({'status': 200, 'message': 'User signup part 1 successful'}), 200
