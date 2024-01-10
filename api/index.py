@@ -265,33 +265,123 @@ def get_gifts():
 
 # from datetime import datetime
 
+    
+@app.route('/gifts.delete/<int:gift_id>', methods=['DELETE'])
+def delete_gift(gift_id):
+    try:
+        table_name = 'gifts'
+        response = supabase.table(table_name).delete().eq('id', gift_id).execute()
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, error=str(e))       
+    
+@app.route('/colors.add', methods=['POST'])
+def add_colors():
+    try:
+        if request.method == 'POST':
+            colors = request.json 
+            table_name = 'product_color'
+            for color in colors:
+                 print(color , "\n")
+                 colorInsert = {
+                     'product_id': color['product_id'],
+                     'color': color['color']
+                 }
+                 supabase.table(table_name).upsert([colorInsert]).execute()
+            return jsonify(success = True)
+        else:
+            return jsonify({'error': 'Invalid request method'})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    # Get image bytes from request
+    image_bytes = request.form['image']
+
+    # Upload to Supabase Storage
+    storage = supabase.storage()
+    storage_url = f'{SUPABASE_URL}/storage/gifts_images/' + image_bytes.filename
+    response = storage.from_file(storage_url, image_bytes)
+
+    # # return 'File uploaded successfully'
+
+    # storage_url = f'{SUPABASE_URL}/storage/v1/object/public'
+    # headers = {'Content-Type': 'application/octet-stream', 'Authorization': f'Bearer {SUPABASE_API_KEY}'}
+    # response = requests.post(storage_url, data=image_bytes, headers=headers)
+
+
+    if response.status_code == 200:
+        file_name = response.json().get('data').get('name')
+        print("\nfile name: ", file_name, "\n")
+        image_url = f'{SUPABASE_URL}/storage/gifts_images/{file_name}'
+        return jsonify(success=True, image_url = image_url)
+        #insert_url = f'{SUPABASE_URL}/rest/v1/{SUPABASE_PROJECT_ID}/table/{TABLE_X_NAME}'
+        # headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {SUPABASE_API_KEY}'}
+        # data = {'image_path': image_url}  # You can include other fields as needed
+        # #insert_response = requests.post(insert_url, json=data, headers=headers)
+        # insert_response = supabase.table('images').upsert([data]).execute()
+        
+
+        # if insert_response.status_code == 201:
+        #     return jsonify({'status': 'success', 'message': 'Image uploaded and path saved successfully'})
+        # else:
+        #     return jsonify({'status': 'error', 'message': 'Error saving image path in Table X'})
+
+    else:
+        return 'Error uploading image'
+
+@app.route('/images.add', methods=['POST'])
+def add_images():
+    try:
+        if request.method == 'POST':
+            imagesPaths = request.json 
+            table_name = 'images'
+            for path in imagesPaths:
+                 print(path , "\n")
+                 pathInsert = {
+                     'product_id': path['product_id'],
+                     'type': path['type'],
+                     'imagepath': path['imageUrl'],
+                    #  'imageUrl': path['imageUrl'],
+                 }
+                 supabase.table(table_name).upsert([pathInsert]).execute()
+            return jsonify(success = True)
+        else:
+            return jsonify({'error': 'Invalid request method'})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
 @app.route('/gifts.add', methods=['POST'])
 def add_gift():
     try:
         new_gift = request.json
         table_name = 'gifts'
 
-        # Extract colors and images from new_gift
-        colors = new_gift.pop('colors', [])
-        images = new_gift.pop('images', [])
+        # images = new_gift.pop('images', [])
+        # print("images:", images)
 
         # Insert into the gifts table
-        response = supabase.table(table_name).upsert([new_gift]).execute()
-        gift_id = response.data[0]['id']
+        gift = {
+            'name': new_gift['name'],
+            'description': new_gift['description'],
+            'price': new_gift['price'],
+            'provider_id': new_gift['provider_id']
+        }
 
-        colors_list = []
-        # Insert colors into product_color table
-        for color in colors:
-            # color['product_id'] = gift_id
-            # color['create_date'] = datetime.now().isoformat()
-            # colors_list.add({'product_id': gift_id, 'create_date': datetime.now().isoformat(), 'color': color})
-            supabase.table('product_color').upsert([{'product_id': gift_id, 'create_date': datetime.now().isoformat(), 'color': color}]).execute()
+        response = supabase.table(table_name).upsert([gift]).execute()
+        print('gift:', gift)
+        gift_id = response.data[0]['id']
+        print('gift_id:', gift_id)
 
         # Insert images into images table
-        for image in images:
-            image['product_id'] = gift_id
-            image['create_date'] = datetime.now().isoformat()
-            supabase.table('images').upsert([image]).execute()
+        # for image in images:
+        #     print(image)
+        #     image['product_id'] = gift_id
+        #     image['create_date'] = datetime.now().isoformat()
+        #     supabase.table('images').upsert([image]).execute()
 
         return jsonify(success=True, id=gift_id)
     except Exception as e:
@@ -317,15 +407,7 @@ def update_gift(gift_id):
         return jsonify(success=True)
     except Exception as e:
         return jsonify(success=False, error=str(e))
-
-@app.route('/gifts.delete/<int:gift_id>', methods=['DELETE'])
-def delete_gift(gift_id):
-    try:
-        table_name = 'gifts'
-        response = supabase.table(table_name).delete().eq('id', gift_id).execute()
-        return jsonify(success=True)
-    except Exception as e:
-        return jsonify(success=False, error=str(e))       
+  
 
 
 @app.route('/')
@@ -337,6 +419,6 @@ def about():
     return 'About'
 
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
     
