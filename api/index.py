@@ -88,7 +88,8 @@ def api_signup_user():
     ]).execute()
     
     user_id = response['data'][0]['id']
-   
+    print("User data inserted:", response)
+
     if user_id:
         # Successfully inserted user, proceed to signup_user1
         return jsonify({'status': 200, 'message': 'User signup successful', 'user_id': user_id}), 200
