@@ -352,7 +352,7 @@ def upload():
 
         # Save the file to a desired location
         image_filename = secure_filename(image_file.filename)
-        image_path = 'path/to/save/' + image_filename
+        image_path = f'{SUPABASE_URL}/storage/gifts_images/' + image_filename
         image_file.save(image_path)
 
         # Process the image or perform any other necessary tasks
