@@ -445,6 +445,15 @@ def update_gift(gift_id):
         return jsonify(success=False, error=str(e))
   
 
+@app.route('/api/get_item_provider', methods=['GET'])
+def get_providers(provider_id):
+    table_name = 'provider'
+    response = supabase.table(table_name).select('*').eq('id', provider_id).single().execute()
+    provider_info = response.data
+    print('heeeeeeere')
+    print(provider_info)
+    return  jsonify(provider_info = provider_info)
+
 
 @app.route('/')
 def home():
@@ -455,6 +464,6 @@ def about():
     return 'About'
 
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
     
