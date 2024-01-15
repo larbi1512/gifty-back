@@ -32,6 +32,7 @@ def api_users_login():
     email = request.form.get('email')
     password = request.form.get('password')
     error = None
+    
 
     if not email or len(email) < 5:
         error = 'Email needs to be valid'
@@ -44,10 +45,13 @@ def api_users_login():
 
     # Try fetching user from 'user' table
     response_user = supabase.table('user').select("*").ilike('email', email).execute()
+    isUser = True
+    
 
     # If user is not found in 'user' table, try fetching from 'provider' table
     if len(response_user.data) == 0:
         response_user = supabase.table('provider').select("*").ilike('email', email).execute()
+        isUser = False
 
     if len(response_user.data) == 0:
         return jsonify({'status': 404, 'message': 'Email not found'}), 404
@@ -55,7 +59,7 @@ def api_users_login():
     user = response_user.data[0]
     # Compare plain text password based on the table (user or provider)
     if 'password' in user and user['password'] == password:
-        return jsonify({'status': 200, 'message': 'Login successful', 'data': user}), 200
+        return jsonify({'status': 200, 'message': 'Login successful', 'data': {'user': user, 'isUser': isUser}}), 200
     else:
         return jsonify({'status': 401, 'message': 'Invalid email or password'}), 401
     
@@ -160,7 +164,7 @@ def api_signup_user1():
     
     #add the data to the table user based on the user id
     response = supabase.table('user').insert([
-        {'id': user_id, 'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
+        {'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
     ]).execute()
     
     return jsonify({'status': 200, 'message': 'User signup part 1 successful', 'id': user_id}), 200
