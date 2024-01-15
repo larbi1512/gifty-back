@@ -56,10 +56,14 @@ def api_users_login():
 
     user = response_user.data[0]
     role = 'user' if 'user_id' in user else 'provider'
+    id_field = f'{role}_id'
+    
+    # Extract the user ID from the response
+    user_id = user[id_field]
 
     # Compare plain text password based on the table (user or provider)
     if 'password' in user and user['password'] == password:
-        return jsonify({'status': 200, 'message': 'Login successful', 'data': {'user': user,'role': role}}), 200
+        return jsonify({'status': 200, 'message': 'Login successful', 'data': {'user': user,'role': role, 'user_id': user_id}}), 200
     else:
         return jsonify({'status': 401, 'message': 'Invalid email or password'}), 401
     
