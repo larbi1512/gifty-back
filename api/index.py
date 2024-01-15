@@ -45,21 +45,21 @@ def api_users_login():
 
     # Try fetching user from 'user' table
     response_user = supabase.table('user').select("*").ilike('email', email).execute()
-    isUser = True
     
 
     # If user is not found in 'user' table, try fetching from 'provider' table
     if len(response_user.data) == 0:
         response_user = supabase.table('provider').select("*").ilike('email', email).execute()
-        isUser = False
 
     if len(response_user.data) == 0:
         return jsonify({'status': 404, 'message': 'Email not found'}), 404
 
     user = response_user.data[0]
+    role = 'user' if 'user_id' in user else 'provider'
+
     # Compare plain text password based on the table (user or provider)
     if 'password' in user and user['password'] == password:
-        return jsonify({'status': 200, 'message': 'Login successful', 'data': {'user': user, 'isUser': isUser}}), 200
+        return jsonify({'status': 200, 'message': 'Login successful', 'data': {'user': user,'role': role}}), 200
     else:
         return jsonify({'status': 401, 'message': 'Invalid email or password'}), 401
     
