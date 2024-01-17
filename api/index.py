@@ -140,6 +140,7 @@ def api_signup_provider():
 
 @app.route('/api/signup_user1', methods=['POST'])
 def api_signup_user1():
+    user_id = request.form.get('user_id')
     name = request.form.get('name')
     surname = request.form.get('surname')
     username = request.form.get('username')
@@ -169,7 +170,7 @@ def api_signup_user1():
     #add the data to the table user based on the user id
     response = supabase.table('user').insert([
         {'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
-    ]).execute()
+    ]).eq('user_id', user_id).execute()
     
     return jsonify({'status': 200, 'message': 'User signup part 1 successful'}), 200
 
