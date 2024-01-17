@@ -141,6 +141,7 @@ def api_signup_provider():
 @app.route('/api/signup_user1', methods=['POST'])
 def api_signup_user1():
     user_id = request.form.get('user_id')
+    print("Received user_id in api_signup_user1:", user_id)
     name = request.form.get('name')
     surname = request.form.get('surname')
     username = request.form.get('username')
