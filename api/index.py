@@ -222,6 +222,8 @@ def get_gifts():
         gift['images']=product_images.data
         product_colors = supabase.table('product_color').select('*').eq('product_id', gift['id']).execute()
         gift['colors']=product_colors.data
+        product_tags = supabase.table('gifts_tags').select('*').eq('gift_id', gift['id']).execute()
+        gift['tags']=product_tags.data
     
     # #  Fetch 'isFavorite' information from userFavorites table
     # for gift in gifts_list:
@@ -310,6 +312,20 @@ def add_colors():
                      'color': color['color']
                  }
                  supabase.table(table_name).upsert([colorInsert]).execute()
+            return jsonify(success = True)
+        else:
+            return jsonify({'error': 'Invalid request method'})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/tags.add', methods=['POST'])
+def add_tags():
+    try:
+        if request.method == 'POST':
+            tags = request.json 
+            table_name = 'gifts_tags'
+            for tag in tags:
+                 supabase.table(table_name).upsert([tag]).execute()
             return jsonify(success = True)
         else:
             return jsonify({'error': 'Invalid request method'})
