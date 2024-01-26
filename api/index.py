@@ -350,13 +350,6 @@ def delete_gift(gift_id):
         return jsonify(success=False, error=str(e))       
 
 
-@app.route('/api/get_item_provider<int:provider_id>', methods=['GET'])
-def get_providers(provider_id):
-    table_name = 'provider'
-    response = supabase.table(table_name).select('*').eq('id', provider_id).single().execute()
-    provider_info = response.data
-    return  jsonify(provider_info = provider_info)
-
 @app.route('/')
 def home():
     return 'Hello, World!'
