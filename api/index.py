@@ -289,7 +289,41 @@ def get_gifts():
 
 # from datetime import datetime
 
-    
+
+@app.route('/gifts.getSearchResult', methods=['GET', 'POST'])
+def advanced_search():
+    try:
+        if request.method == 'POST':
+            tags = request.json
+            table_name = 'gifts_tags'
+
+            # Extract tag names and values into separate lists
+            tag_names = [tag['tag_name'] for tag in tags]
+            tag_values = [tag['tag_value'] for tag in tags]
+            idsList = []
+
+            # Fetch all relevant data with a single query
+            result = supabase.table(table_name).select('gift_id', 'tag_name', 'tag_value').\
+                in_('tag_name', tag_names).in_('tag_value', tag_values).execute()
+
+            # Create a dictionary to map (tag_name, tag_value) pairs to gift_id
+            tag_to_gift_id = {(entry['tag_name'], entry['tag_value']): entry['gift_id'] for entry in result.data}
+
+            # Update each tag with its corresponding gift_id
+            for tag in tags:
+                tag['gift_id'] = tag_to_gift_id.get((tag['tag_name'], tag['tag_value']))
+                idsList.add(tag['gift_id'])
+
+            results = supabase.table('gifts').select('*').in_('id', idsList).execute()
+            search_results=results.data
+
+            return jsonify(gifts=search_results)
+        else:
+            return jsonify({'error': 'Invalid request method'})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
 @app.route('/gifts.delete/<int:gift_id>', methods=['DELETE'])
 def delete_gift(gift_id):
     try:
