@@ -313,7 +313,8 @@ def advanced_search():
                 tag['gift_id'] = tag_to_gift_id.get((tag['tag_name'], tag['tag_value']))
                 idsList.add(tag['gift_id'])
 
-            results = supabase.table('gifts').select('*').in_('id', idsList).execute()
+            results = supabase.table('gifts').select('*')
+            # .in_('id', idsList).execute()
             search_results=results.data
 
             return jsonify(gifts=search_results)
