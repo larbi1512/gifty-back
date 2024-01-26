@@ -303,8 +303,7 @@ def advanced_search():
             idsList = []
 
             # Fetch all relevant data with a single query
-            result = supabase.table(table_name).select('gift_id', 'tag_name', 'tag_value').\
-                in_('tag_name', tag_names).in_('tag_value', tag_values).execute()
+            result = supabase.table(table_name).select('gift_id', 'tag_name', 'tag_value').in_('tag_name', tag_names).in_('tag_value', tag_values).execute()
 
             # Create a dictionary to map (tag_name, tag_value) pairs to gift_id
             tag_to_gift_id = {(entry['tag_name'], entry['tag_value']): entry['gift_id'] for entry in result.data}
