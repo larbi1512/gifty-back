@@ -311,7 +311,7 @@ def advanced_search():
             # Update each tag with its corresponding gift_id
             for tag in tags:
                 tag['gift_id'] = tag_to_gift_id.get((tag['tag_name'], tag['tag_value']))
-                idsList.add(tag['gift_id'])
+                idsList.append(tag['gift_id'])
 
             results = supabase.table('gifts').select('*')
             # .in_('id', idsList).execute()
