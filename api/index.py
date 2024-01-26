@@ -3,7 +3,6 @@ import json
 from supabase import create_client, Client
 import traceback
 from datetime import datetime
-from werkzeug.security import check_password_hash
 
 
 SUPABASE_URL = 'https://zkfovcmkaobvsceazqat.supabase.co'
@@ -28,11 +27,12 @@ def get_users():
     return  jsonify(users = user_list)
 
 
-@app.route('/api/user_login', methods=['POST'])
+@app.route('/api/user_login', methods=['POST', 'GET'])
 def api_users_login():
     email = request.form.get('email')
     password = request.form.get('password')
     error = None
+    
 
     if not email or len(email) < 5:
         error = 'Email needs to be valid'
@@ -45,6 +45,7 @@ def api_users_login():
 
     # Try fetching user from 'user' table
     response_user = supabase.table('user').select("*").ilike('email', email).execute()
+    
 
     # If user is not found in 'user' table, try fetching from 'provider' table
     if len(response_user.data) == 0:
@@ -54,29 +55,125 @@ def api_users_login():
         return jsonify({'status': 404, 'message': 'Email not found'}), 404
 
     user = response_user.data[0]
+    role = 'user' if 'user_id' in user else 'provider'
+    id_field = f'{role}_id'
+    
+    # Extract the user ID from the response
+    user_id = user[id_field]
 
-    # Check for password in both 'user' and 'provider' tables
-    if 'password' not in user:
-        # Try fetching password from 'provider' table
-        response_password = supabase.table('provider').select("password").ilike('email', email).execute()
-        
-        if len(response_password.data) == 0:
-            return jsonify({'status': 500, 'message': 'Password column missing in user/provider table'}), 500
-
-        user['password'] = response_password.data[0]['password']
-
-    # Compare hashed password
-    if not check_password_hash(user['password'], password):
+    # Compare plain text password based on the table (user or provider)
+    if 'password' in user and user['password'] == password:
+        return jsonify({'status': 200, 'message': 'Login successful', 'data': {'user': user,'role': role, 'user_id': user_id}}), 200
+    else:
         return jsonify({'status': 401, 'message': 'Invalid email or password'}), 401
+    
 
-    return jsonify({'status': 200, 'message': 'Login successful', 'data': user}), 200
+@app.route('/api/signup_user', methods=['POST'])
+def api_signup_user():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirm_password')
+
+    # Add validation checks for email, password, and confirm_password
+    if not email or len(email) < 5:
+        return jsonify({'status': 400, 'message': 'Email needs to be valid'}), 400
+
+    if not password or len(password) < 5:
+        return jsonify({'status': 400, 'message': 'Provide a valid password'}), 400
+
+    if password != confirm_password:
+        return jsonify({'status': 400, 'message': 'Passwords do not match'}), 400
+
+    # Check if the user already exists
+    user_exists_response = supabase.table('user').select("*").ilike('email', email).execute()
+
+    if len(user_exists_response.data) > 0:
+        return jsonify({'status': 400, 'message': 'User with this email already exists'}), 400
+
+    # Insert the new user into the 'user' table
+    response = supabase.table('user').insert([
+        {'email': email, 'password': password},
+    ]).execute()
+    
+    print("User data inserted:", response)
+
+    if response['status'] == 201:
+        # Successfully inserted user, proceed to signup_user1
+        user_id = response['data'][0]['user_id']
+        return jsonify({'status': 200, 'user_id': user_id, 'message': 'User signup successful'}), 200
+    else:
+        # Failed to insert user
+        return jsonify({'status': 500, 'message': 'Internal Server Error'}), 500
+
+    
+    
+@app.route('/api/signup_provider', methods=['POST'])
+def api_signup_provider():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirm_password')
+
+    # Add validation checks for email, password, and confirm_password if needed
+    if not email or len(email) < 5:
+        return jsonify({'status': 400, 'message': 'Email needs to be valid'}), 400
+
+    if not password or len(password) < 5:
+        return jsonify({'status': 400, 'message': 'Provide a valid password'}), 400
+
+    if password != confirm_password:
+        return jsonify({'status': 400, 'message': 'Passwords do not match'}), 400
+
+    # Check if the provider already exists
+    provider_exists_response = supabase.table('provider').select("*").ilike('email', email).execute()
+
+    if len(provider_exists_response.data) > 0:
+        return jsonify({'status': 400, 'message': 'Provider with this email already exists'}), 400
+
+    # Insert the new provider into the 'provider' table
+    response = supabase.table('provider').insert([
+        {'email': email, 'password': password},
+    ]).execute()
+    
 
 
-@app.route('/api/user_signup', methods=['GET', 'POST'])
-def api_user_signup():
-    email= request.form.get('email')
-    password= request.form.get('password')
-    error =False
+    return jsonify({'status': 200, 'message': 'Provider signup successful'}), 200
+
+@app.route('/api/signup_user1', methods=['POST'])
+def api_signup_user1():
+    user_id = request.form.get('user_id')
+    print("Received user_id in api_signup_user1:", user_id)
+    name = request.form.get('name')
+    surname = request.form.get('surname')
+    username = request.form.get('username')
+    wilaya = request.form.get('wilaya')
+    phone_number = request.form.get('phone_number')
+    
+    #add validation forms
+    if not name:
+        return jsonify({'status': 400, 'message': 'name must be filled'}), 400
+    elif not surname :
+        return jsonify({'status': 400, 'message': 'surname must be filled'}), 400
+    elif not username:
+        return jsonify({'status': 400, 'message': 'username must be filled'}), 400
+    elif not wilaya:
+        return jsonify({'status': 400, 'message': 'wilaya must be filled'}), 400
+    elif not phone_number:
+        return jsonify({'status': 400, 'message': 'phone_number must be filled'}), 400
+    elif len(phone_number) != 10:
+        return jsonify({'status': 400, 'message': 'phone_number must be 10 digits'}), 400
+    elif not phone_number.isdigit():
+        return jsonify({'status': 400, 'message': 'phone_number must be digits'}), 400
+    elif not phone_number.startswith('0'):
+        return jsonify({'status': 400, 'message': 'phone_number must start with 0'}), 400
+    elif not phone_number.startswith('05') and not phone_number.startswith('06') and not phone_number.startswith('07'):
+        return jsonify({'status': 400, 'message': 'phone_number must start with 05 or 06 or 07'}), 400
+    
+    #add the data to the table user based on the user id
+    response = supabase.table('user').insert([
+        {'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
+    ]).eq('user_id', user_id).execute()
+    
+    return jsonify({'status': 200, 'message': 'User signup part 1 successful'}), 200
 
 
 @app.route('/isEmailExists', methods=['GET'])
