@@ -222,8 +222,8 @@ def get_gifts():
         gift['images']=product_images.data
         product_colors = supabase.table('product_color').select('*').eq('product_id', gift['id']).execute()
         gift['colors']=product_colors.data
-        product_tags = supabase.table('gifts_tags').select('*').eq('gift_id', gift['id']).execute()
-        gift['tags']=product_tags.data
+        # product_tags = supabase.table('gifts_tags').select('*').eq('gift_id', gift['id']).execute()
+        # gift['tags']=product_tags.data
     
     # #  Fetch 'isFavorite' information from userFavorites table
     # for gift in gifts_list:
