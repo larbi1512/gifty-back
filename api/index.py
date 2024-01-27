@@ -3,6 +3,8 @@ import json
 from supabase import create_client, Client
 import traceback
 from datetime import datetime
+import os
+import tempfile
 
 
 SUPABASE_URL = 'https://zkfovcmkaobvsceazqat.supabase.co'
@@ -16,6 +18,7 @@ data = [
     {'id': 2, 'name': 'Item 2'},
     {'id': 3, 'name': 'Item 3'},
 ]
+
 
 @app.route('/api/get_users', methods=['GET'])
 def get_users():
@@ -97,9 +100,9 @@ def api_signup_user():
     
     print("User data inserted:", response)
 
-    if response['status'] == 201:
+    if len(response.data)>0:
         # Successfully inserted user, proceed to signup_user1
-        user_id = response['data'][0]['user_id']
+        user_id = response.data[0]['user_id']
         return jsonify({'status': 200, 'user_id': user_id, 'message': 'User signup successful'}), 200
     else:
         # Failed to insert user
@@ -134,9 +137,17 @@ def api_signup_provider():
         {'email': email, 'password': password},
     ]).execute()
     
+    print("Provider data inserted:", response)
+
+    if len(response.data)>0:
+        # Successfully inserted user, proceed to signup_provider1
+        provider_id = response.data[0]['provider_id']
+        return jsonify({'status': 200, 'provider_id': provider_id, 'message': 'Provider signup successful'}), 200
+    else:
+        # Failed to insert provider
+        return jsonify({'status': 500, 'message': 'Internal Server Error'}), 500
 
 
-    return jsonify({'status': 200, 'message': 'Provider signup successful'}), 200
 
 @app.route('/api/signup_user1', methods=['POST'])
 def api_signup_user1():
@@ -169,12 +180,223 @@ def api_signup_user1():
         return jsonify({'status': 400, 'message': 'phone_number must start with 05 or 06 or 07'}), 400
     
     #add the data to the table user based on the user id
-    response = supabase.table('user').insert([
-        {'name': name, 'surname': surname, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
+    response = supabase.table('user').update([
+        {'name': name, 'username': username, 'wilaya': wilaya, 'phone_number': phone_number},
     ]).eq('user_id', user_id).execute()
     
     return jsonify({'status': 200, 'message': 'User signup part 1 successful'}), 200
 
+
+@app.route('/api/signup_provider1', methods=['POST'])
+def api_provider_user1():
+    provider_id = request.form.get('provider_id')
+    print("Received provider_id in api_provider_user1:", provider_id)
+    store_name = request.form.get('store_name')
+    location = request.form.get('location')
+    phone_number = request.form.get('phone_number')
+    category = request.form.get('category')
+    
+    #add validation forms
+    if not store_name:
+        return jsonify({'status': 400, 'message': 'username must be filled'}), 400
+    elif not location:
+        return jsonify({'status': 400, 'message': 'wilaya must be filled'}), 400
+    elif not phone_number:
+        return jsonify({'status': 400, 'message': 'phone_number must be filled'}), 400
+    elif len(phone_number) != 10:
+        return jsonify({'status': 400, 'message': 'phone_number must be 10 digits'}), 400
+    elif not phone_number.isdigit():
+        return jsonify({'status': 400, 'message': 'phone_number must be digits'}), 400
+    elif not phone_number.startswith('0'):
+        return jsonify({'status': 400, 'message': 'phone_number must start with 0'}), 400
+    elif not phone_number.startswith('05') and not phone_number.startswith('06') and not phone_number.startswith('07'):
+        return jsonify({'status': 400, 'message': 'phone_number must start with 05 or 06 or 07'}), 400
+    elif not category:
+        return jsonify({'status': 400, 'message': 'category must be filled'}), 400
+ 
+    
+    
+    #add the data to the table provider based on the provider id
+    response = supabase.table('provider').update([
+        {'store_name': store_name, 'location': location, 'phone_number': phone_number, 'category': category,},
+    ]).eq('provider_id', provider_id).execute()
+    
+    return jsonify({'status': 200, 'message': 'User signup part 1 successful'}), 200
+
+
+def upload_user_image(file, user_id):
+    try:
+        print("Attempting to upload image to Supabase Storage for user...")
+
+        # Save the temporary file to a known location
+        temp_file_path = os.path.join(tempfile.gettempdir(), file.filename)
+        file.save(temp_file_path)
+
+        # Upload the file to Supabase Storage
+        storage_response = supabase.storage.from_('user_pic').upload(file.filename, file=temp_file_path)
+        print("File uploaded:", file.filename)
+
+        if storage_response.status_code != 200:
+            raise Exception(f"Failed to upload image. Status code: {storage_response.status_code}")
+
+        # Extract metadata from the response
+        metadata = storage_response.json()
+
+        # Construct the image URL using the metadata
+        image_url = f"{SUPABASE_URL}/storage/v1/object/{metadata['Key']}"
+        if not image_url:
+            raise Exception("Image URL not found in the response")
+
+        print("Image URL:", image_url)
+
+        # Update the user profile with the image URL
+        response = supabase.table('user').update({
+            'profile_pic': image_url
+            
+        }).eq('user_id', user_id).execute()
+
+        if 'error' in response and response['error'] is not None:
+            raise Exception(f"Failed to update user profile: {response['error']['message']}")
+
+        print("User profile updated successfully.")
+
+        return image_url
+
+    except Exception as e:
+        print(f"Exception during image upload for user: {e}")
+        raise
+
+    finally:
+        # Clean up the temporary file
+        os.remove(temp_file_path)
+
+
+def upload_provider_image(file, provider_id):
+    try:
+        print("Attempting to upload image to Supabase Storage for provider...")
+
+        # Save the temporary file to a known location
+        temp_file_path = os.path.join(tempfile.gettempdir(), file.filename)
+        file.save(temp_file_path)
+
+        # Upload the file to Supabase Storage
+        storage_response = supabase.storage.from_('user_pic').upload(file.filename, file=temp_file_path)
+        print("File uploaded:", file.filename)
+
+        if storage_response.status_code != 200:
+            raise Exception(f"Failed to upload image. Status code: {storage_response.status_code}")
+
+        # Extract metadata from the response
+        metadata = storage_response.json()
+
+        # Construct the image URL using the metadata
+        image_url = f"{SUPABASE_URL}/storage/v1/object/{metadata['Key']}"
+        if not image_url:
+            raise Exception("Image URL not found in the response")
+
+        print("Image URL:", image_url)
+
+        # Update the provider profile with the image URL
+        response = supabase.table('provider').update({
+            'brand_pic': image_url
+        }).eq('provider_id', provider_id).execute()
+
+        if 'error' in response and response['error'] is not None:
+            raise Exception(f"Failed to update provider profile: {response['error']['message']}")
+
+        print("Provider profile updated successfully.")
+
+        return image_url
+
+    except Exception as e:
+        print(f"Exception during image upload for provider: {e}")
+        raise
+
+    finally:
+        # Clean up the temporary file
+        os.remove(temp_file_path)
+
+
+@app.route('/api/finish_signup_user', methods=['POST'])
+def finish_signup_user():
+    try:
+        user_id = request.form.get('user_id')
+        
+        print("Received user_id in finish_signup_user:", user_id)
+
+        # Check if an image file is included in the request
+        if 'file' in request.files:
+            file = request.files['file']
+            if file.filename != '' and file:
+                print("File received:", file.filename)
+                print("Attempting to upload image to Supabase Storage for user...")
+
+                # Upload image and update user profile
+                image_url = upload_user_image(file, user_id)
+                print("Image URL is:", image_url)
+
+        return jsonify({'status': 200, 'message': 'Signup process completed successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'status': 500, 'message': str(e)}), 500
+
+
+@app.route('/api/finish_signup_provider', methods=['POST'])
+def finish_signup_provider():
+    try:
+        provider_id = request.form.get('provider_id')
+        facebook = request.form.get('facebook')
+        instagram = request.form.get('instagram')
+        website = request.form.get('website')
+        print("Received provider_id in finish_signup_provider:", provider_id)
+
+        # Check if an image file is included in the request
+        if 'file' in request.files:
+            file = request.files['file']
+            if file.filename != '' and file:
+                print("File received:", file.filename)
+                print("Attempting to upload image to Supabase Storage for provider...")
+
+                # Upload image and update provider profile
+                image_url = upload_provider_image(file, provider_id)
+                print("Image URL is:", image_url)
+                
+                response = supabase.table('provider').update({
+            'facebook': facebook,
+            'instagram': instagram,
+            'website': website }).eq('provider_id', provider_id).execute()
+
+        return jsonify({'status': 200, 'message': 'Signup process completed successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'status': 500, 'message': str(e)}), 500
+
+
+@app.route('/api/get_user_data', methods=['GET'])
+def get_user_data():
+    user_id = request.args.get('user_id')
+
+    # Fetch user data from the 'user' table
+    user_data_response = supabase.table('user').select("*").eq('user_id', user_id).execute()
+
+    if len(user_data_response.data) == 0:
+        return jsonify({'status': 404, 'message': 'User not found'}), 404
+
+    user_data = user_data_response.data[0]
+    return jsonify(user_data), 200
+
+@app.route('/api/get_provider_data', methods=['GET'])
+def get_provider_data():
+    provider_id = request.args.get('provider_id')
+
+    # Fetch provider data from the 'provider' table
+    provider_data_response = supabase.table('provider').select("*").eq('provider_id', provider_id).execute()
+
+    if len(provider_data_response.data) == 0:
+        return jsonify({'status': 404, 'message': 'Provider not found'}), 404
+
+    provider_data = provider_data_response.data[0]
+    return jsonify(provider_data), 200
 
 @app.route('/isEmailExists', methods=['GET'])
 def is_email_exists():
@@ -506,6 +728,7 @@ def home():
 @app.route('/about')
 def about():
     return 'About'
+
 
 
 # if __name__ == '__main__':
