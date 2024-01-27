@@ -490,7 +490,7 @@ def update_gift(gift_id):
         return jsonify(success=False, error=str(e))
   
 
-@app.route('/get_item_provider<int:provider_id>', methods=['GET'])
+@app.route('/get_item_provider/<int:provider_id>', methods=['GET'])
 def get_providers(provider_id):
     table_name = 'provider'
     response = supabase.table(table_name).select('*').eq('id', provider_id).single().execute()
